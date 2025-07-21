@@ -18,6 +18,11 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        growth: "bg-crop text-primary-foreground hover:bg-crop/90 shadow-md",
+        earth: "bg-earth text-primary-foreground hover:bg-earth/90",
+        sky: "bg-sky text-accent-foreground hover:bg-sky/90",
+        harvest: "bg-harvest text-warning-foreground hover:bg-harvest/90",
+        success: "bg-success text-success-foreground hover:bg-success/90",
       },
       size: {
         default: "h-10 px-4 py-2",
