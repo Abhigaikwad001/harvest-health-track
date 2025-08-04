@@ -26,23 +26,29 @@ import WeatherAdvisory from "./pages/farming/WeatherAdvisory";
 import IrrigationPlanner from "./pages/farming/IrrigationPlanner";
 import FertilizerPlanner from "./pages/farming/FertilizerPlanner";
 
-// Placeholder components for remaining pages
-const Marketplace = () => <div>Marketplace coming soon</div>;
-const MarketplacePost = () => <div>Marketplace Post coming soon</div>;
-const Chat = () => <div>Chat coming soon</div>;
-const Forums = () => <div>Forums coming soon</div>;
-const ExpertHelp = () => <div>Expert Help coming soon</div>;
-const CropAdvisor = () => <div>Crop Advisor coming soon</div>;
-const DiseaseDetector = () => <div>Disease Detector coming soon</div>;
-const Chatbot = () => <div>Chatbot coming soon</div>;
-const AdminDashboard = () => <div>Admin Dashboard coming soon</div>;
+// Marketplace & Community
+import Marketplace from "./pages/marketplace/Marketplace";
+import MarketplacePost from "./pages/marketplace/MarketplacePost";
+import Chat from "./pages/community/Chat";
+import Forums from "./pages/community/Forums";
+import ExpertHelp from "./pages/community/ExpertHelp";
+
+// AI Tools
+import CropAdvisor from "./pages/ai/CropAdvisor";
+import DiseaseDetector from "./pages/ai/DiseaseDetector";
+import Chatbot from "./pages/ai/Chatbot";
+
+// Admin & General
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import About from "./pages/general/About";
+import Contact from "./pages/general/Contact";
+import Terms from "./pages/general/Terms";
+import Privacy from "./pages/general/Privacy";
+
+// Placeholder components for remaining admin pages
 const AdminUsers = () => <div>Admin Users coming soon</div>;
 const AdminMarketplace = () => <div>Admin Marketplace coming soon</div>;
 const AdminReports = () => <div>Admin Reports coming soon</div>;
-const About = () => <div>About coming soon</div>;
-const Contact = () => <div>Contact coming soon</div>;
-const Terms = () => <div>Terms coming soon</div>;
-const Privacy = () => <div>Privacy coming soon</div>;
 
 const queryClient = new QueryClient();
 
