@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Leaf, TrendingUp, Cloud } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-farming.jpg";
 
 export const Hero = () => {
@@ -25,7 +26,7 @@ export const Hero = () => {
           
           <h1 className="text-4xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
             Grow Smarter with
-            <span className="text-primary block">Harvest Health Track</span>
+            <span className="text-primary block">Smart Farmer</span>
           </h1>
           
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto lg:mx-0">
@@ -51,13 +52,17 @@ export const Hero = () => {
 
           {/* Call to Action */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-            <Button size="lg" variant="growth" className="text-lg px-8">
-              Start Farming Smart
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8">
-              Watch Demo
-            </Button>
+            <Link to="/register">
+              <Button size="lg" className="text-lg px-8">
+                Start Farming Smart
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link to="/dashboard">
+              <Button size="lg" variant="outline" className="text-lg px-8">
+                View Dashboard
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
