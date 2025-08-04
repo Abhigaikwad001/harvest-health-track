@@ -102,9 +102,9 @@ const CropPlanner = () => {
                     <SelectValue placeholder="Select budget range" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Low (< ₹50,000)</SelectItem>
+                    <SelectItem value="low">Low ({'<'} ₹50,000)</SelectItem>
                     <SelectItem value="medium">Medium (₹50,000 - ₹2,00,000)</SelectItem>
-                    <SelectItem value="high">High (> ₹2,00,000)</SelectItem>
+                    <SelectItem value="high">High ({'>'} ₹2,00,000)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
