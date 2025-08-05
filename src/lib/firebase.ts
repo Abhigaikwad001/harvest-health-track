@@ -53,6 +53,10 @@ export interface UserProfile {
   email: string;
   displayName: string;
   userType: 'farmer' | 'buyer' | 'admin';
+  location?: string;
+  farmSize?: number;
+  soilType?: string;
+  phone?: string;
   createdAt: any;
   updatedAt: any;
 }
@@ -64,6 +68,12 @@ export interface CropPlan {
   plantingDate: string;
   harvestDate: string;
   area: number;
+  location: string;
+  soilType: string;
+  season: string;
+  waterSource: string;
+  budget: string;
+  status: 'planned' | 'planted' | 'growing' | 'harvested';
   notes: string;
   createdAt: any;
   updatedAt: any;
@@ -72,10 +82,84 @@ export interface CropPlan {
 export interface Expense {
   id: string;
   userId: string;
+  type: string;
   category: string;
   amount: number;
   description: string;
   date: string;
+  createdAt: any;
+}
+
+export interface Income {
+  id: string;
+  userId: string;
+  type: string;
+  amount: number;
+  source: string;
+  date: string;
+  description?: string;
+  createdAt: any;
+}
+
+export interface MarketplaceListing {
+  id: string;
+  userId: string;
+  title: string;
+  description: string;
+  category: string;
+  price: number;
+  priceUnit: string;
+  location: string;
+  contactPhone: string;
+  images: string[];
+  status: 'active' | 'sold' | 'inactive';
+  createdAt: any;
+  updatedAt: any;
+}
+
+export interface SoilTest {
+  id: string;
+  userId: string;
+  location: string;
+  phLevel: number;
+  nitrogen: number;
+  phosphorus: number;
+  potassium: number;
+  organicMatter: number;
+  testDate: string;
+  recommendations: string[];
+  createdAt: any;
+}
+
+export interface ChatMessage {
+  id: string;
+  userId: string;
+  userName: string;
+  message: string;
+  timestamp: any;
+  chatRoom: string;
+}
+
+export interface ForumPost {
+  id: string;
+  userId: string;
+  userName: string;
+  title: string;
+  content: string;
+  category: string;
+  likes: number;
+  replies: number;
+  createdAt: any;
+  updatedAt: any;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: 'info' | 'warning' | 'success' | 'error';
+  read: boolean;
   createdAt: any;
 }
 
@@ -283,6 +367,254 @@ export const updateExpense = async (expenseId: string, data: Partial<Expense>) =
 export const deleteExpense = async (expenseId: string) => {
   try {
     await deleteDoc(doc(db, 'expenses', expenseId));
+    return { error: null };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+};
+
+// Income Tracking Functions
+export const addIncome = async (income: Omit<Income, 'id' | 'createdAt'>) => {
+  try {
+    const docRef = await addDoc(collection(db, 'income'), {
+      ...income,
+      createdAt: serverTimestamp()
+    });
+    return { id: docRef.id, error: null };
+  } catch (error: any) {
+    return { id: null, error: error.message };
+  }
+};
+
+export const getIncome = async (userId: string) => {
+  try {
+    const q = query(
+      collection(db, 'income'),
+      where('userId', '==', userId),
+      orderBy('date', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+    const income: Income[] = [];
+    querySnapshot.forEach((doc) => {
+      income.push({ id: doc.id, ...doc.data() } as Income);
+    });
+    return { data: income, error: null };
+  } catch (error: any) {
+    return { data: [], error: error.message };
+  }
+};
+
+// Marketplace Functions
+export const addMarketplaceListing = async (listing: Omit<MarketplaceListing, 'id' | 'createdAt' | 'updatedAt'>) => {
+  try {
+    const docRef = await addDoc(collection(db, 'marketplace'), {
+      ...listing,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    return { id: docRef.id, error: null };
+  } catch (error: any) {
+    return { id: null, error: error.message };
+  }
+};
+
+export const getMarketplaceListings = async (category?: string) => {
+  try {
+    let q = query(
+      collection(db, 'marketplace'),
+      where('status', '==', 'active'),
+      orderBy('createdAt', 'desc')
+    );
+    
+    if (category && category !== 'All') {
+      q = query(
+        collection(db, 'marketplace'),
+        where('status', '==', 'active'),
+        where('category', '==', category),
+        orderBy('createdAt', 'desc')
+      );
+    }
+    
+    const querySnapshot = await getDocs(q);
+    const listings: MarketplaceListing[] = [];
+    querySnapshot.forEach((doc) => {
+      listings.push({ id: doc.id, ...doc.data() } as MarketplaceListing);
+    });
+    return { data: listings, error: null };
+  } catch (error: any) {
+    return { data: [], error: error.message };
+  }
+};
+
+export const getUserMarketplaceListings = async (userId: string) => {
+  try {
+    const q = query(
+      collection(db, 'marketplace'),
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+    const listings: MarketplaceListing[] = [];
+    querySnapshot.forEach((doc) => {
+      listings.push({ id: doc.id, ...doc.data() } as MarketplaceListing);
+    });
+    return { data: listings, error: null };
+  } catch (error: any) {
+    return { data: [], error: error.message };
+  }
+};
+
+export const updateMarketplaceListing = async (listingId: string, data: Partial<MarketplaceListing>) => {
+  try {
+    await updateDoc(doc(db, 'marketplace', listingId), {
+      ...data,
+      updatedAt: serverTimestamp()
+    });
+    return { error: null };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+};
+
+// Soil Test Functions
+export const addSoilTest = async (soilTest: Omit<SoilTest, 'id' | 'createdAt'>) => {
+  try {
+    const docRef = await addDoc(collection(db, 'soilTests'), {
+      ...soilTest,
+      createdAt: serverTimestamp()
+    });
+    return { id: docRef.id, error: null };
+  } catch (error: any) {
+    return { id: null, error: error.message };
+  }
+};
+
+export const getSoilTests = async (userId: string) => {
+  try {
+    const q = query(
+      collection(db, 'soilTests'),
+      where('userId', '==', userId),
+      orderBy('testDate', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+    const soilTests: SoilTest[] = [];
+    querySnapshot.forEach((doc) => {
+      soilTests.push({ id: doc.id, ...doc.data() } as SoilTest);
+    });
+    return { data: soilTests, error: null };
+  } catch (error: any) {
+    return { data: [], error: error.message };
+  }
+};
+
+// Chat Functions
+export const sendChatMessage = async (message: Omit<ChatMessage, 'id' | 'timestamp'>) => {
+  try {
+    const docRef = await addDoc(collection(db, 'chatMessages'), {
+      ...message,
+      timestamp: serverTimestamp()
+    });
+    return { id: docRef.id, error: null };
+  } catch (error: any) {
+    return { id: null, error: error.message };
+  }
+};
+
+export const getChatMessages = async (chatRoom: string) => {
+  try {
+    const q = query(
+      collection(db, 'chatMessages'),
+      where('chatRoom', '==', chatRoom),
+      orderBy('timestamp', 'asc'),
+      limit(100)
+    );
+    const querySnapshot = await getDocs(q);
+    const messages: ChatMessage[] = [];
+    querySnapshot.forEach((doc) => {
+      messages.push({ id: doc.id, ...doc.data() } as ChatMessage);
+    });
+    return { data: messages, error: null };
+  } catch (error: any) {
+    return { data: [], error: error.message };
+  }
+};
+
+// Forum Functions
+export const addForumPost = async (post: Omit<ForumPost, 'id' | 'createdAt' | 'updatedAt'>) => {
+  try {
+    const docRef = await addDoc(collection(db, 'forumPosts'), {
+      ...post,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    return { id: docRef.id, error: null };
+  } catch (error: any) {
+    return { id: null, error: error.message };
+  }
+};
+
+export const getForumPosts = async (category?: string) => {
+  try {
+    let q = query(
+      collection(db, 'forumPosts'),
+      orderBy('createdAt', 'desc')
+    );
+    
+    if (category && category !== 'All') {
+      q = query(
+        collection(db, 'forumPosts'),
+        where('category', '==', category),
+        orderBy('createdAt', 'desc')
+      );
+    }
+    
+    const querySnapshot = await getDocs(q);
+    const posts: ForumPost[] = [];
+    querySnapshot.forEach((doc) => {
+      posts.push({ id: doc.id, ...doc.data() } as ForumPost);
+    });
+    return { data: posts, error: null };
+  } catch (error: any) {
+    return { data: [], error: error.message };
+  }
+};
+
+// Notification Functions
+export const addNotification = async (notification: Omit<Notification, 'id' | 'createdAt'>) => {
+  try {
+    const docRef = await addDoc(collection(db, 'notifications'), {
+      ...notification,
+      createdAt: serverTimestamp()
+    });
+    return { id: docRef.id, error: null };
+  } catch (error: any) {
+    return { id: null, error: error.message };
+  }
+};
+
+export const getUserNotifications = async (userId: string) => {
+  try {
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+    const notifications: Notification[] = [];
+    querySnapshot.forEach((doc) => {
+      notifications.push({ id: doc.id, ...doc.data() } as Notification);
+    });
+    return { data: notifications, error: null };
+  } catch (error: any) {
+    return { data: [], error: error.message };
+  }
+};
+
+export const markNotificationAsRead = async (notificationId: string) => {
+  try {
+    await updateDoc(doc(db, 'notifications', notificationId), {
+      read: true
+    });
     return { error: null };
   } catch (error: any) {
     return { error: error.message };
