@@ -49,14 +49,20 @@ const googleProvider = new GoogleAuthProvider();
 
 // Types
 export interface UserProfile {
-  id: string;
-  email: string;
+  id?: string;
+  uid: string;
   displayName: string;
-  userType: 'farmer' | 'buyer' | 'admin';
+  email: string;
+  phone?: string;
+  language?: string;
+  farmName?: string;
   location?: string;
   farmSize?: number;
+  primaryCrop?: string;
+  farmDescription?: string;
+  bio?: string;
+  userType: 'farmer' | 'buyer' | 'admin';
   soilType?: string;
-  phone?: string;
   createdAt: any;
   updatedAt: any;
 }
@@ -118,17 +124,19 @@ export interface MarketplaceListing {
 }
 
 export interface SoilTest {
-  id: string;
+  id?: string;
   userId: string;
-  location: string;
-  phLevel: number;
+  location?: string;
+  phLevel?: number;
+  ph?: number;
   nitrogen: number;
   phosphorus: number;
   potassium: number;
   organicMatter: number;
+  moisture?: number;
   testDate: string;
-  recommendations: string[];
-  createdAt: any;
+  recommendations?: string[];
+  createdAt?: any;
 }
 
 export interface ChatMessage {
@@ -504,6 +512,253 @@ export const getSoilTests = async (userId: string) => {
     return { data: soilTests, error: null };
   } catch (error: any) {
     return { data: [], error: error.message };
+  }
+};
+
+// User Settings types and functions
+export interface UserSettings {
+  id?: string;
+  userId: string;
+  language: string;
+  currency: string;
+  theme: string;
+  notifications: {
+    weather: boolean;
+    crops: boolean;
+    prices: boolean;
+  };
+  createdAt?: any;
+  updatedAt?: any;
+}
+
+export const saveUserSettings = async (settings: UserSettings) => {
+  try {
+    const userSettingsRef = doc(db, 'userSettings', settings.userId);
+    await setDoc(userSettingsRef, {
+      ...settings,
+      updatedAt: serverTimestamp(),
+      createdAt: settings.createdAt || serverTimestamp()
+    }, { merge: true });
+    return { error: null };
+  } catch (error: any) {
+    console.error('Error saving user settings:', error);
+    return { error: error.message };
+  }
+};
+
+export const getUserSettings = async (userId: string) => {
+  try {
+    const userSettingsRef = doc(db, 'userSettings', userId);
+    const docSnap = await getDoc(userSettingsRef);
+    if (docSnap.exists()) {
+      return { data: docSnap.data() as UserSettings, error: null };
+    }
+    return { data: null, error: null };
+  } catch (error: any) {
+    console.error('Error getting user settings:', error);
+    return { data: null, error: error.message };
+  }
+};
+
+// Fertilizer Plan types and functions
+export interface FertilizerPlan {
+  id?: string;
+  userId: string;
+  cropType: string;
+  fieldArea: number;
+  growthStage: string;
+  nitrogen: number;
+  phosphorus: number;
+  potassium: number;
+  recommendations: any[];
+  createdAt?: any;
+}
+
+export const addFertilizerPlan = async (plan: FertilizerPlan) => {
+  try {
+    const docRef = await addDoc(collection(db, 'fertilizerPlans'), {
+      ...plan,
+      createdAt: serverTimestamp()
+    });
+    return { id: docRef.id, error: null };
+  } catch (error: any) {
+    console.error('Error adding fertilizer plan:', error);
+    return { id: null, error: error.message };
+  }
+};
+
+export const getFertilizerPlans = async (userId: string) => {
+  try {
+    const q = query(
+      collection(db, 'fertilizerPlans'),
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+    const plans = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as FertilizerPlan[];
+    return { data: plans, error: null };
+  } catch (error: any) {
+    console.error('Error getting fertilizer plans:', error);
+    return { data: [], error: (error as Error).message };
+  }
+};
+
+// Irrigation Schedule types and functions
+export interface IrrigationSchedule {
+  id?: string;
+  userId: string;
+  cropType: string;
+  fieldSize: number;
+  soilMoisture: number;
+  irrigationMethod: string;
+  schedule: any[];
+  createdAt?: any;
+}
+
+export const addIrrigationSchedule = async (schedule: IrrigationSchedule) => {
+  try {
+    const docRef = await addDoc(collection(db, 'irrigationSchedules'), {
+      ...schedule,
+      createdAt: serverTimestamp()
+    });
+    return { id: docRef.id, error: null };
+  } catch (error: any) {
+    console.error('Error adding irrigation schedule:', error);
+    return { id: null, error: error.message };
+  }
+};
+
+export const getIrrigationSchedules = async (userId: string) => {
+  try {
+    const q = query(
+      collection(db, 'irrigationSchedules'),
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+    const schedules = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as IrrigationSchedule[];
+    return { data: schedules, error: null };
+  } catch (error: any) {
+    console.error('Error getting irrigation schedules:', error);
+    return { data: [], error: (error as Error).message };
+  }
+};
+
+// Crop Consultation types and functions
+export interface CropConsultation {
+  id?: string;
+  userId: string;
+  cropType: string;
+  growthStage: string;
+  location: string;
+  issue: string;
+  weather: string;
+  aiRecommendation: string;
+  confidence: number;
+  createdAt?: any;
+}
+
+export const addCropConsultation = async (consultation: CropConsultation) => {
+  try {
+    const docRef = await addDoc(collection(db, 'cropConsultations'), {
+      ...consultation,
+      createdAt: serverTimestamp()
+    });
+    return { id: docRef.id, error: null };
+  } catch (error: any) {
+    console.error('Error adding crop consultation:', error);
+    return { id: null, error: error.message };
+  }
+};
+
+export const getCropConsultations = async (userId: string) => {
+  try {
+    const q = query(
+      collection(db, 'cropConsultations'),
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+    const consultations = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as CropConsultation[];
+    return { data: consultations, error: null };
+  } catch (error: any) {
+    console.error('Error getting crop consultations:', error);
+    return { data: [], error: (error as Error).message };
+  }
+};
+
+// Disease Detection types and functions
+export interface DiseaseDetection {
+  id?: string;
+  userId: string;
+  imageUrl: string;
+  cropType: string;
+  disease: string;
+  confidence: number;
+  severity: string;
+  treatment: string;
+  status: string;
+  createdAt?: any;
+}
+
+export const addDiseaseDetection = async (detection: DiseaseDetection) => {
+  try {
+    const docRef = await addDoc(collection(db, 'diseaseDetections'), {
+      ...detection,
+      createdAt: serverTimestamp()
+    });
+    return { id: docRef.id, error: null };
+  } catch (error: any) {
+    console.error('Error adding disease detection:', error);
+    return { id: null, error: error.message };
+  }
+};
+
+export const getDiseaseDetections = async (userId: string) => {
+  try {
+    const q = query(
+      collection(db, 'diseaseDetections'),
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+    const detections = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as DiseaseDetection[];
+    return { data: detections, error: null };
+  } catch (error: any) {
+    console.error('Error getting disease detections:', error);
+    return { data: [], error: (error as Error).message };
+  }
+};
+
+// Admin functions
+export const getAdminStats = async () => {
+  try {
+    // This would be implemented with proper admin authentication
+    // For now, returning mock data
+    return {
+      data: {
+        totalUsers: 12345,
+        activeListings: 1567,
+        supportTickets: 23,
+        revenue: 234567
+      },
+      error: null
+    };
+  } catch (error: any) {
+    console.error('Error getting admin stats:', error);
+    return { data: null, error: error.message };
   }
 };
 

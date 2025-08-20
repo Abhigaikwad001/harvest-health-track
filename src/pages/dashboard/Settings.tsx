@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,8 +6,76 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Settings as SettingsIcon, Moon, Sun, Globe, Bell } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { saveUserSettings, getUserSettings, UserSettings } from "@/lib/firebase";
+import { useToast } from "@/hooks/use-toast";
 
 const Settings = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [settings, setSettings] = useState<UserSettings>({
+    userId: '',
+    language: 'english',
+    currency: 'inr',
+    theme: 'light',
+    notifications: {
+      weather: true,
+      crops: true,
+      prices: false
+    }
+  });
+
+  useEffect(() => {
+    if (user) {
+      loadSettings();
+    }
+  }, [user]);
+
+  const loadSettings = async () => {
+    if (!user) return;
+
+    const { data, error } = await getUserSettings(user.uid);
+    if (data) {
+      setSettings(data);
+    } else if (!error) {
+      // Set default settings for new user
+      setSettings(prev => ({ ...prev, userId: user.uid }));
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    const { error } = await saveUserSettings({ ...settings, userId: user.uid });
+    
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Settings saved successfully!"
+      });
+    }
+    setLoading(false);
+  };
+
+  if (!user) {
+    return (
+      <Layout>
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold mb-4">Please log in to access Settings</h2>
+          <p className="text-muted-foreground">You need to be logged in to manage your settings.</p>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -30,7 +99,10 @@ const Settings = () => {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="language">Language</Label>
-                <Select>
+                <Select 
+                  value={settings.language} 
+                  onValueChange={(value) => setSettings(prev => ({ ...prev, language: value }))}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select language" />
                   </SelectTrigger>
@@ -43,7 +115,10 @@ const Settings = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="currency">Currency</Label>
-                <Select>
+                <Select 
+                  value={settings.currency} 
+                  onValueChange={(value) => setSettings(prev => ({ ...prev, currency: value }))}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select currency" />
                   </SelectTrigger>
@@ -72,11 +147,17 @@ const Settings = () => {
                     Toggle between light and dark themes
                   </p>
                 </div>
-                <Switch />
+                <Switch 
+                  checked={settings.theme === 'dark'}
+                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, theme: checked ? 'dark' : 'light' }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="theme">Theme</Label>
-                <Select>
+                <Select 
+                  value={settings.theme} 
+                  onValueChange={(value) => setSettings(prev => ({ ...prev, theme: value }))}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select theme" />
                   </SelectTrigger>
@@ -106,7 +187,13 @@ const Settings = () => {
                     Get notified about weather changes
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch 
+                  checked={settings.notifications.weather}
+                  onCheckedChange={(checked) => setSettings(prev => ({ 
+                    ...prev, 
+                    notifications: { ...prev.notifications, weather: checked }
+                  }))}
+                />
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
@@ -115,7 +202,13 @@ const Settings = () => {
                     Reminders for watering, fertilizing, etc.
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch 
+                  checked={settings.notifications.crops}
+                  onCheckedChange={(checked) => setSettings(prev => ({ 
+                    ...prev, 
+                    notifications: { ...prev.notifications, crops: checked }
+                  }))}
+                />
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
@@ -124,7 +217,13 @@ const Settings = () => {
                     Market price changes for your crops
                   </p>
                 </div>
-                <Switch />
+                <Switch 
+                  checked={settings.notifications.prices}
+                  onCheckedChange={(checked) => setSettings(prev => ({ 
+                    ...prev, 
+                    notifications: { ...prev.notifications, prices: checked }
+                  }))}
+                />
               </div>
             </CardContent>
           </Card>
@@ -143,7 +242,9 @@ const Settings = () => {
         </div>
 
         <div className="flex justify-end">
-          <Button>Save Settings</Button>
+          <Button onClick={handleSave} disabled={loading}>
+            {loading ? "Saving..." : "Save Settings"}
+          </Button>
         </div>
       </div>
     </Layout>
